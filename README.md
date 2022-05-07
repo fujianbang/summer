@@ -1,8 +1,10 @@
 # summer
 
-Summer is a web framework written in Go.
-
 [![Go](https://github.com/fujianbang/summer/actions/workflows/go.yml/badge.svg?branch=master)](https://github.com/fujianbang/summer/actions/workflows/go.yml)
+
+[WIP] Summer is a web framework written in Go.
+
+<span style="color: red">Project is in progress, cannot be used in production yet.</span>
 
 ## Installation
 
