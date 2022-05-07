@@ -4,50 +4,53 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"sync"
+	"time"
 )
 
 // Context is the custom context of `summer` framework.
 type Context struct {
 	request        *http.Request
 	responseWriter http.ResponseWriter
+	writeMux       *sync.Mutex
+	hasTimeout     bool // timeout flag
 }
 
 func NewContext(r *http.Request, w http.ResponseWriter) *Context {
 	return &Context{
 		request:        r,
 		responseWriter: w,
+		writeMux:       &sync.Mutex{},
+		hasTimeout:     false,
 	}
 }
 
-func (ctx *Context) WriteMux() {
-	// TODO
+func (ctx *Context) WriteMux() *sync.Mutex {
+	return ctx.writeMux
 }
 
-func (ctx *Context) GetRequest() {
-	// TODO
+func (ctx *Context) GetRequest() *http.Request {
+	return ctx.request
 }
 
-func (ctx *Context) GetResponse() {
-	// TODO
+func (ctx *Context) GetResponse() http.ResponseWriter {
+	return ctx.responseWriter
 }
 
 func (ctx *Context) SetHasTimeout() {
-	// TODO
-	panic("implement me")
+	ctx.hasTimeout = true
 }
 
-func (ctx *Context) HasTimeout() {
-	// TODO
-	panic("implement me")
+func (ctx *Context) HasTimeout() bool {
+	return ctx.hasTimeout
 }
 
 func (ctx *Context) BaseContext() context.Context {
 	return ctx.request.Context()
 }
 
-func (ctx *Context) Deadline() {
-	// TODO
-	panic("implement me")
+func (ctx *Context) Deadline() (deadline time.Time, ok bool) {
+	return ctx.request.Context().Deadline()
 }
 
 func (ctx *Context) Done() <-chan struct{} {
@@ -55,13 +58,11 @@ func (ctx *Context) Done() <-chan struct{} {
 }
 
 func (ctx *Context) Err() error {
-	// TODO
-	panic("implement me")
+	return ctx.BaseContext().Err()
 }
 
-func (ctx *Context) Value(key interface{}) {
-	// TODO
-	panic("implement me")
+func (ctx *Context) Value(key interface{}) interface{} {
+	return ctx.BaseContext().Value(key)
 }
 
 func (ctx *Context) QueryInt(key string, def int) {
@@ -110,15 +111,17 @@ func (ctx *Context) BindJson(obj interface{}) {
 }
 
 func (ctx *Context) Json(status int, data interface{}) error {
+	if ctx.HasTimeout() {
+		return nil
+	}
+
+	ctx.responseWriter.Header().Set("Content-Type", "application/json")
+	ctx.responseWriter.WriteHeader(status)
+
 	bytes, err := json.Marshal(data)
 	if err != nil {
 		return err
 	}
-
-	// write http response header
-	ctx.responseWriter.WriteHeader(status)
-
-	// write http response body
 	_, err = ctx.responseWriter.Write(bytes)
 	if err != nil {
 		return err
@@ -129,7 +132,7 @@ func (ctx *Context) Json(status int, data interface{}) error {
 	return nil
 }
 
-func (ctx *Context) HTML(status int, data interface{}) error {
+func (ctx *Context) HTML(status int, data interface{}, template string) error {
 	// TODO
 	panic("implement me")
 }
