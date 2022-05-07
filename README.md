@@ -22,3 +22,7 @@ func main() {
 }
 
 ```
+
+## Features
+
+* Using [gorilla/mux](https://github.com/gorilla/mux) as HTTP router
