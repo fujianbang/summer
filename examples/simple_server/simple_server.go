@@ -21,7 +21,7 @@ func main() {
 }
 
 func registerRouter(core *summer.Core) {
-	core.Get("foo", FooControllerHandler)
+	core.Get("/foo", FooControllerHandler)
 }
 
 func FooControllerHandler(ctx *summer.Context) error {
