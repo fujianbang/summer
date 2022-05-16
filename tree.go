@@ -1,15 +1,14 @@
-package internal
+package summer
 
 import (
+	"errors"
 	"strings"
-
-	"github.com/fujianbang/summer"
 )
 
 type node struct {
 	isLast   bool
 	segment  string
-	handler  summer.ControllerHandler
+	handlers []ControllerHandler
 	children []*node
 }
 
@@ -17,7 +16,7 @@ func newNode() *node {
 	return &node{
 		isLast:   false,
 		segment:  "",
-		handler:  nil,
+		handlers: nil,
 		children: nil,
 	}
 }
@@ -75,4 +74,65 @@ func (n *node) matchNode(uri string) *node {
 
 func isWildSegment(segment string) bool {
 	return strings.HasPrefix(segment, ":")
+}
+
+type Tree struct {
+	root *node
+}
+
+func NewTree() *Tree {
+	root := newNode()
+	return &Tree{root}
+}
+
+func (tree *Tree) AddRouter(uri string, handlers []ControllerHandler) error {
+	n := tree.root
+	if n.matchNode(uri) != nil {
+		return errors.New("route exist: " + uri)
+	}
+
+	segments := strings.Split(uri, "/")
+
+	for index, segment := range segments {
+		if !isWildSegment(segment) {
+			segment = strings.ToUpper(segment)
+		}
+		isLast := index == len(segments)-1
+
+		var objNode *node
+
+		childNodes := n.filterChildNodes(segment)
+		if len(childNodes) > 0 {
+			for _, cnode := range childNodes {
+				if cnode.segment == segment {
+					objNode = cnode
+					break
+				}
+			}
+		}
+
+		if objNode == nil {
+			cnode := newNode()
+			cnode.segment = segment
+			if isLast {
+				cnode.isLast = true
+				cnode.handlers = handlers
+			}
+			n.children = append(n.children, cnode)
+			objNode = cnode
+		}
+
+		n = objNode
+	}
+
+	return nil
+}
+
+func (tree *Tree) FindHandler(uri string) []ControllerHandler {
+	matchNode := tree.root.matchNode(uri)
+	if matchNode == nil {
+		return nil
+	}
+
+	return matchNode.handlers
 }

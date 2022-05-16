@@ -13,7 +13,9 @@ type Context struct {
 	request        *http.Request
 	responseWriter http.ResponseWriter
 	writeMux       *sync.Mutex
-	hasTimeout     bool // timeout flag
+	hasTimeout     bool                // timeout flag
+	handlers       []ControllerHandler // handlers
+	index          int                 // current handler index
 }
 
 func NewContext(r *http.Request, w http.ResponseWriter) *Context {
@@ -22,6 +24,8 @@ func NewContext(r *http.Request, w http.ResponseWriter) *Context {
 		responseWriter: w,
 		writeMux:       &sync.Mutex{},
 		hasTimeout:     false,
+		handlers:       make([]ControllerHandler, 0),
+		index:          -1,
 	}
 }
 
@@ -140,4 +144,19 @@ func (ctx *Context) HTML(status int, data interface{}, template string) error {
 func (ctx *Context) Text(status int, data string) error {
 	// TODO
 	panic("implement me")
+}
+
+func (ctx *Context) SetHandlers(handlers []ControllerHandler) {
+	ctx.handlers = handlers
+}
+
+// Next calls the next handler in the chain.
+func (ctx *Context) Next() error {
+	ctx.index++
+	if ctx.index < len(ctx.handlers) {
+		if err := ctx.handlers[ctx.index](ctx); err != nil {
+			return err
+		}
+	}
+	return nil
 }

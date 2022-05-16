@@ -41,7 +41,8 @@ func FooControllerHandler(ctx *summer.Context) error {
 			}
 		}()
 		// TODO business logic
-		time.Sleep(10 * time.Second)
+		time.Sleep(8 * time.Second)
+		log.Println("FooControllerHandler() ------模拟业务执行逻辑!!!!------")
 
 		ctx.Json(http.StatusOK, map[string]interface{}{
 			"code": 0,
