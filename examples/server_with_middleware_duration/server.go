@@ -3,7 +3,6 @@ package main
 import (
 	"log"
 	"net/http"
-	"time"
 
 	"github.com/fujianbang/summer"
 	"github.com/fujianbang/summer/middleware"
@@ -11,7 +10,7 @@ import (
 
 func main() {
 	core := summer.NewCore()
-	core.Use(middleware.Duration())
+	core.Use(middleware.Recovery())
 
 	registerRouter(core)
 
@@ -26,9 +25,9 @@ func main() {
 }
 
 func registerRouter(core *summer.Core) {
-	core.Get("/duration", func(c *summer.Context) error {
-		log.Println("request /duration")
-		time.Sleep(time.Millisecond * 123)
+	core.Get("/panic", func(c *summer.Context) error {
+		log.Println("panic")
+		panic("panic")
 		return nil
 	})
 }
